@@ -147,8 +147,8 @@ namespace MarkingMenu
                 menuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 menuTextBlock[i].EndInit();
                 grid.Children.Add(menuTextBlock[i]);
-                menuTextBlock[i].IsEnabled = false;
-
+                menuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
+                menuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
             }
 
             for (int i = 0; i < 4; i++)
@@ -180,7 +180,8 @@ namespace MarkingMenu
                 submenuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 submenuTextBlock[i].EndInit();
                 grid.Children.Add(submenuTextBlock[i]);
-                submenuTextBlock[i].IsEnabled = false;
+                submenuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
+                submenuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
             }
             for (int i = 0; i < 4; i++)
             {
