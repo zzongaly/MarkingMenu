@@ -32,7 +32,7 @@ namespace MarkingMenu
         const int NOTRUNNING = -1, DEFAULT = 0, INVOCATE = 1, MARKING1 = 2, MARKING2 = 3, MARKING3 = 4;
 
         int screenWidth = 1366, screenHeight = 768;
-        int rectWidth, rectHeight, rectNx, rectNy, rectN;
+        int invocationWidth = 170, invocationHeight = 150;
 
         Menus menus;
         Tasks tasks;
@@ -63,25 +63,12 @@ namespace MarkingMenu
             tasks = new Tasks(depth, maxSession, numMenuPerParticipant, numDuplcationInSession, participantNumber);
             markingState = new int[depth];
 
-            initializeSize();
             initializeBrushs();
             initializeField();
             initializeInvocation();
             initializePanel();
             initializeEllipse();
             initializeTouchLine();
-        }
-
-        private void initializeSize()
-        {
-            if (depth == 2)
-            {
-                rectWidth = 170; rectHeight = 152; rectNx = 4; rectNy = 4; rectN = rectNx * rectNy;
-            }
-            else
-            {
-                rectWidth = 85; rectHeight = 76; rectNx = 8; rectNy = 8; rectN = rectNx * rectNy;
-            }
         }
 
         private void initializeBrushs()
@@ -243,11 +230,11 @@ namespace MarkingMenu
         {
             invocation = new Rectangle();
             invocation.BeginInit();
-            invocation.Width = 170; //rectWidth;
-            invocation.Height = screenHeight - rectNy * rectHeight;
+            invocation.Width = invocationWidth;
+            invocation.Height = invocationHeight;
             invocation.VerticalAlignment = System.Windows.VerticalAlignment.Top;
             invocation.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            invocation.Margin = new Thickness((screenWidth - rectNx * rectWidth), rectNy * rectHeight, 0, 0);
+            invocation.Margin = new Thickness(screenWidth / 2, screenHeight - invocationHeight, 0, 0);
             invocation.Stroke = grayBrush;
             invocation.Fill = invocationUpBrush;
             invocation.Visibility = System.Windows.Visibility.Hidden;
@@ -581,7 +568,7 @@ namespace MarkingMenu
         {
             Rectangle panelBackground = new Rectangle();
             panelBackground.BeginInit();
-            panelBackground.Width = screenWidth - rectNx * rectWidth;
+            panelBackground.Width = screenWidth / 2;
             panelBackground.Height = screenHeight;
             panelBackground.VerticalAlignment = System.Windows.VerticalAlignment.Top;
             panelBackground.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
