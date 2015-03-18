@@ -232,8 +232,8 @@ namespace MarkingMenu
                 grid.Children.Add(subsubmenuTextBlock[i]);
                 subsubmenuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
                 subsubmenuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
-                //subsubmenuTextBlock[i].TouchEnter += new EventHandler<TouchEventArgs>(subsubmenuEnterHandler);
-                //subsubmenuTextBlock[i].MouseEnter += new MouseEventHandler(subsubmenuEnterHandler);
+                subsubmenuTextBlock[i].TouchEnter += new EventHandler<TouchEventArgs>(subsubmenuTextBlockEnterHandler);
+                subsubmenuTextBlock[i].MouseEnter += new MouseEventHandler(subsubmenuTextBlockEnterHandler);
                 subsubmenuTextBlock[i].MouseUp += new MouseButtonEventHandler(subsubmenuUpHandler);
                 subsubmenuTextBlock[i].TouchUp += new EventHandler<TouchEventArgs>(subsubmenuUpHandler);
             }
@@ -482,7 +482,19 @@ namespace MarkingMenu
                     subsubmenuTextBlock[i].Text = menus.subsubmenus[currentMenu, currentSubmenu, i];
             }
         }
-        
+
+        void subsubmenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
+        {
+            if (state != MARKING3)
+                return;
+            for (int i = 0; i < 4; i++)
+            {
+                if ((TextBlock)sender == subsubmenuTextBlock[i])
+                {
+                    subsubmenuEnterHandler(subsubmenuEllipse[i], e);
+                }
+            }
+        }
 
         void subsubmenuEnterHandler(object sender, RoutedEventArgs e){
             if (state != MARKING3)
@@ -508,7 +520,7 @@ namespace MarkingMenu
         {
             if (state != MARKING3)
                 return;
-            if (subsubmenuTextBlock[currentSubsubmenu].IsMouseOver || subsubmenuTextBlock[currentSubsubmenu].AreAnyTouchesOver)
+            if (subsubmenuTextBlock[currentSubsubmenu].IsMouseOver || subsubmenuTextBlock[currentSubsubmenu].AreAnyTouchesCaptured)
                 return;
             
             currentSubsubmenu = -1;
