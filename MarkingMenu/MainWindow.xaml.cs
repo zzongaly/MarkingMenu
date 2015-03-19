@@ -247,10 +247,10 @@ namespace MarkingMenu
             //invocation.MouseLeftButtonUp += new MouseButtonEventHandler(cancelInvocationHandler);
             invocation.MouseRightButtonDown += new MouseButtonEventHandler(InvocationUpHandler);
 
-            invocation.TouchDown += new EventHandler<TouchEventArgs>(invocateHandler);
-            invocation.TouchEnter += new EventHandler<TouchEventArgs>(invocateHandler);
-            invocation.TouchUp += new EventHandler<TouchEventArgs>(InvocationUpHandler);
-            invocation.TouchLeave += new EventHandler<TouchEventArgs>(InvocationUpHandler);
+            //invocation.TouchDown += new EventHandler<TouchEventArgs>(invocateHandler);
+            //invocation.TouchEnter += new EventHandler<TouchEventArgs>(invocateHandler);
+            /*vocation.TouchUp += new EventHandler<TouchEventArgs>(InvocationUpHandler);
+            invocation.TouchLeave += new EventHandler<TouchEventArgs>(InvocationUpHandler);*/
 
 
         }
@@ -508,7 +508,9 @@ namespace MarkingMenu
         {
             if (state != MARKING3)
                 return;
-            if (subsubmenuTextBlock[currentSubsubmenu].IsMouseOver || subsubmenuTextBlock[currentSubsubmenu].AreAnyTouchesCaptured)
+            if (currentSubsubmenu == -1)
+                return;
+            if (subsubmenuTextBlock[currentSubsubmenu].IsMouseOver || !field.AreAnyTouchesOver)
                 return;
             
             currentSubsubmenu = -1;
@@ -692,6 +694,9 @@ namespace MarkingMenu
                 touchLine[i].VerticalAlignment = VerticalAlignment.Top;
                 touchLine[i].HorizontalAlignment = HorizontalAlignment.Left;
                 touchLine[i].Visibility = Visibility.Hidden;
+                touchLine[i].IsManipulationEnabled = false;
+                touchLine[i].IsEnabled = false;
+                //touchLine[i].
                 touchLine[i].EndInit();
 
                 grid.Children.Add(touchLine[i]);
