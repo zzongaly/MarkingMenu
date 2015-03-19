@@ -22,7 +22,7 @@ namespace MarkingMenu
     {
         String log = "";
 
-        int depth = 3;  // 2: 4*4, 3: 4*4*4        
+        int depth = 2;  // 2: 4*4, 3: 4*4*4        
         int participantNumber = 0; // 0 ~ 15, key for which random series
         int maxSession = 10;
         int numMenuPerParticipant = 8;
@@ -166,6 +166,10 @@ namespace MarkingMenu
                 submenuEllipse[i].MouseEnter += new MouseEventHandler(submenuEnterHandler);
                 submenuEllipse[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
                 submenuEllipse[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
+                submenuEllipse[i].TouchLeave += new EventHandler<TouchEventArgs>(submenuLeaveHandler);
+                submenuEllipse[i].MouseLeave += new MouseEventHandler(submenuLeaveHandler);
+                submenuEllipse[i].MouseUp += new MouseButtonEventHandler(submenuUpHandler);
+                submenuEllipse[i].TouchUp += new EventHandler<TouchEventArgs>(submenuUpHandler);
 
                 submenuTextBlock[i] = new TextBlock();
                 submenuTextBlock[i].BeginInit();
@@ -182,6 +186,10 @@ namespace MarkingMenu
                 grid.Children.Add(submenuTextBlock[i]);
                 submenuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
                 submenuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
+                submenuTextBlock[i].TouchEnter += new EventHandler<TouchEventArgs>(submenuTextBlockEnterHandler);
+                submenuTextBlock[i].MouseEnter += new MouseEventHandler(submenuTextBlockEnterHandler);
+                submenuTextBlock[i].MouseUp += new MouseButtonEventHandler(submenuUpHandler);
+                submenuTextBlock[i].TouchUp += new EventHandler<TouchEventArgs>(submenuUpHandler);
             }
             for (int i = 0; i < 4; i++)
             {
@@ -359,15 +367,6 @@ namespace MarkingMenu
             }
         }
 
-        /*
-        void textBoxMoveHandler(object sender, MouseEventArgs e){
-            fieldMove(e.GetPosition(grid).X, e.GetPosition().Y);
-        }
-        void textBoxMoveHandler(object sender, TouchEventArgs e)
-        {
-            fieldMove(e.GetTouchPoint().Position.X, e.GetTouchPoint().Position.Y);
-        }*/
-        
         void menuEnterHandler(object sender, RoutedEventArgs e)
         {
             if (state != MARKING1)
@@ -422,18 +421,34 @@ namespace MarkingMenu
         {
             if (state != MARKING2)
                 return;
-            state = MARKING3;
+            switch(depth){
+                case 2:
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if ((Ellipse)sender == submenuEllipse[i])
+                        {
+                            currentSubmenu = i;
+                        }
+                    }
+                    submenuEnter();
+                    break;
+                case 3:
+                    state = MARKING3;
 
-            for (int i = 0; i < 4; i++)
-            {
-                if ((Ellipse)sender == submenuEllipse[i])
-                {
-                    currentSubmenu = i;
-                    touchLine.setXY(2, submenuEllipse[i].Margin.Left + submenuEllipse[i].Width / 2, submenuEllipse[i].Margin.Top + submenuEllipse[i].Height / 2);
-                }
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if ((Ellipse)sender == submenuEllipse[i])
+                        {
+                            currentSubmenu = i;
+                            touchLine.setXY(2, submenuEllipse[i].Margin.Left + submenuEllipse[i].Width / 2, submenuEllipse[i].Margin.Top + submenuEllipse[i].Height / 2);
+                        }
+                    }
+                    submenuEnter(((Ellipse)sender).Margin.Left, ((Ellipse)sender).Margin.Top);
+                    break;
             }
-            submenuEnter(((Ellipse)sender).Margin.Left, ((Ellipse)sender).Margin.Top);
         }
+                
+        
         void submenuEnter(double x, double y)
         {
             int threshold1 = 120;
@@ -470,16 +485,62 @@ namespace MarkingMenu
                     subsubmenuTextBlock[i].Text = menus.subsubmenus[currentMenu, currentSubmenu, i];
             }
         }
-
-        void subsubmenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
+        void submenuEnter()
         {
-            if (state != MARKING3)
+            submenuEllipse[currentSubmenu].Fill = blackBrush;
+            submenuEllipse[currentSubmenu].Stroke = blackBrush;
+            submenuTextBlock[currentSubmenu].Background = blackBrush;
+            submenuTextBlock[currentSubmenu].Foreground = whiteBrush;
+        }
+
+        void submenuLeaveHandler(object sender, RoutedEventArgs e)
+        {
+            if (depth != 2)
+                return;
+            if (state != MARKING2)
+                return;
+            if (submenuTextBlock[currentSubmenu].IsMouseOver || submenuTextBlock[currentSubmenu].AreAnyTouchesCaptured)
+                return;
+
+            currentSubmenu = -1;
+            submenuLeave();
+        }
+
+        void submenuLeave()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                submenuEllipse[i].Fill = grayBrush;
+                submenuEllipse[i].Stroke = grayBrush;
+                submenuTextBlock[i].Foreground = blackBrush;
+                submenuTextBlock[i].Background = grayBrush;
+            }
+        }
+
+        void submenuUpHandler(object sender, RoutedEventArgs e)
+        {
+            if (depth != 2)
+                return;
+            invocationUp();
+            if (currentMenu * 4 + currentSubmenu == sessionTasks[currentTask] - 1)
+            {
+                //TODO log
+                invocationUp();
+                runNext();
+            }
+        }
+
+        void submenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
+        {
+            if (depth != 2)
+                return;
+            if (state != MARKING2)
                 return;
             for (int i = 0; i < 4; i++)
             {
-                if ((TextBlock)sender == subsubmenuTextBlock[i])
+                if ((TextBlock)sender == submenuTextBlock[i])
                 {
-                    subsubmenuEnterHandler(subsubmenuEllipse[i], e);
+                    submenuEnterHandler(submenuEllipse[i], e);
                 }
             }
         }
@@ -539,6 +600,20 @@ namespace MarkingMenu
                 //TODO log
                 invocationUp();
                 runNext();
+            }
+        }
+
+
+        void subsubmenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
+        {
+            if (state != MARKING3)
+                return;
+            for (int i = 0; i < 4; i++)
+            {
+                if ((TextBlock)sender == subsubmenuTextBlock[i])
+                {
+                    subsubmenuEnterHandler(subsubmenuEllipse[i], e);
+                }
             }
         }
 
