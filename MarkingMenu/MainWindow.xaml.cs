@@ -22,7 +22,7 @@ namespace MarkingMenu
     {
         String log = "";
 
-        int depth = 2;  // 2: 4*4, 3: 4*4*4        
+        int depth = 3;  // 2: 4*4, 3: 4*4*4        
         int participantNumber = 0; // 0 ~ 15, key for which random series
         int maxSession = 10;
         int numMenuPerParticipant = 8;
@@ -34,6 +34,7 @@ namespace MarkingMenu
         int screenWidth = 1366, screenHeight = 768;
         int invocationWidth = 170, invocationHeight = 150;
         int distance = 120, threshold = 80;
+        int menuFontSize = 20;
 
         Menus menus;
         Tasks tasks;
@@ -49,6 +50,8 @@ namespace MarkingMenu
         Point menuCenter, submenuCenter, subsubmenuCenter;
 
         TouchLine touchLine;
+
+        int lastSelectionKey = -1;
 
         SolidColorBrush buttonDownBrush, InvocationBrush, invocationDownBrush, grayBrush, whiteBrush, blackBrush, lightgrayBrush, lightlightgrayBrush;
 
@@ -200,7 +203,7 @@ namespace MarkingMenu
                 menuTextBlock[i].BeginInit();
                 menuTextBlock[i].Width = width * 0.8;
                 menuTextBlock[i].Height = 30;
-                menuTextBlock[i].FontSize = 20;
+                menuTextBlock[i].FontSize = menuFontSize;
                 menuTextBlock[i].Padding = new Thickness(0, 0, 0, 0);
                 menuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 menuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
@@ -226,7 +229,7 @@ namespace MarkingMenu
                 submenuTextBlock[i].BeginInit();
                 submenuTextBlock[i].Width = width * 0.8;
                 submenuTextBlock[i].Height = 30;
-                submenuTextBlock[i].FontSize = 20;
+                submenuTextBlock[i].FontSize = menuFontSize;
                 submenuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 submenuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 submenuTextBlock[i].TextAlignment = TextAlignment.Center;
@@ -254,7 +257,7 @@ namespace MarkingMenu
                 subsubmenuTextBlock[i].BeginInit();
                 subsubmenuTextBlock[i].Width = width * 0.8;
                 subsubmenuTextBlock[i].Height = 30;
-                subsubmenuTextBlock[i].FontSize = 20;
+                subsubmenuTextBlock[i].FontSize = menuFontSize;
                 subsubmenuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 subsubmenuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 subsubmenuTextBlock[i].TextAlignment = TextAlignment.Center;
@@ -286,8 +289,10 @@ namespace MarkingMenu
                 case DEFAULT:
                     if (isOnElement(invocation, X, Y))
                     {
+                        cancelInvocation();
+                        lastSelectionKey++;
                         state = INVOCATE;
-                        invocation.Fill = invocationDownBrush;
+                        invocation.Fill = invocationDownBrush;                        
                     }
                     break;
 
@@ -392,11 +397,13 @@ namespace MarkingMenu
                         cancelInvocation();
                         if (currentSubmenu != -1)
                         {
+                            holdVisibleLastSeclection(lastSelectionKey);
                             if (currentMenu * 4 + currentSubmenu == sessionTasks[currentTask] - 1)
                             {
                                 //TODO log
                                 runNext();
                             }
+                            
                         }
                     }
                     break;
@@ -405,6 +412,7 @@ namespace MarkingMenu
                     cancelInvocation();
                     if (currentSubmenu != -1)
                     {
+                        holdVisibleLastSeclection(lastSelectionKey);
                         if (currentMenu * 16 + currentSubmenu * 4 + currentSubsubmenu == sessionTasks[currentTask] - 1)
                         {
                             //TODO log
@@ -446,7 +454,7 @@ namespace MarkingMenu
             return -1;
         }
 
-
+        
         private void cancelInvocation()
         {
             state = DEFAULT;
@@ -631,6 +639,35 @@ namespace MarkingMenu
                 }
         }
 
+        private async void holdVisibleLastSeclection(int lastSelectionKey)
+        {
+            if (currentMenu != -1)
+            {
+                menuEllipse[currentMenu].Visibility = System.Windows.Visibility.Visible;
+                menuTextBlock[currentMenu].Visibility = System.Windows.Visibility.Visible;
+            }
+            if (currentSubmenu != -1)
+            {
+                submenuEllipse[currentSubmenu].Visibility = System.Windows.Visibility.Visible;
+                submenuTextBlock[currentSubmenu].Visibility = System.Windows.Visibility.Visible;
+                touchLine.setXY(2, submenuEllipse[currentSubmenu]);
+            }
+            if (currentSubsubmenu != -1)
+            {
+                touchLine.setXY(3, subsubmenuEllipse[currentSubsubmenu]);
+                subsubmenuEllipse[currentSubsubmenu].Visibility = System.Windows.Visibility.Visible;
+                subsubmenuTextBlock[currentSubsubmenu].Visibility = System.Windows.Visibility.Visible;
+            
+            }
+            touchLine.drawLine(depth);
+
+            await Task.Delay(500);
+            if (lastSelectionKey != this.lastSelectionKey)
+                return;
+            if (lastSelectionKey > 10)
+                lastSelectionKey = 0;
+            cancelInvocation();
+        }
 
         private void start()
         {
