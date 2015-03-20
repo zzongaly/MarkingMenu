@@ -33,6 +33,7 @@ namespace MarkingMenu
 
         int screenWidth = 1366, screenHeight = 768;
         int invocationWidth = 170, invocationHeight = 150;
+        int distance = 120, threshold = 80;
 
         Menus menus;
         Tasks tasks;
@@ -45,6 +46,7 @@ namespace MarkingMenu
         Ellipse[] menuEllipse, submenuEllipse, subsubmenuEllipse;
         TextBlock[] menuTextBlock, submenuTextBlock, subsubmenuTextBlock;
         int currentMenu, currentSubmenu, currentSubsubmenu;
+        Point menuCenter, submenuCenter, subsubmenuCenter;
 
         TouchLine touchLine;
 
@@ -62,6 +64,10 @@ namespace MarkingMenu
             menus = new Menus(depth);
             tasks = new Tasks(depth, maxSession, numMenuPerParticipant, numDuplcationInSession, participantNumber);
             markingState = new int[depth];
+
+            canvas.MouseDown += new MouseButtonEventHandler(canvasDownHandler);
+            canvas.MouseMove += new MouseEventHandler(canvasMoveHandler);
+            canvas.MouseUp += new MouseButtonEventHandler(canvasUpHandler);            
 
             initializeBrushs();
             initializeField();
@@ -96,16 +102,7 @@ namespace MarkingMenu
             field.Fill = whiteBrush;
             field.Margin = new Thickness(screenWidth/2 , 0, 0, 0);
             field.EndInit();
-            grid.Children.Add(field);
-
-            field.MouseDown += new MouseButtonEventHandler(fieldDownHandler);
-            field.MouseUp += new MouseButtonEventHandler(fieldUpHandler);
-            field.MouseMove += new MouseEventHandler(fieldMoveHandler);
-
-            field.TouchDown += new EventHandler<TouchEventArgs>(fieldDownHandler);
-            field.TouchUp += new EventHandler<TouchEventArgs>(fieldUpHandler);
-            field.TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-            
+            canvas.Children.Add(field);
         }
 
         private void initializeEllipse()
@@ -129,11 +126,7 @@ namespace MarkingMenu
                 menuEllipse[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 menuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
                 menuEllipse[i].EndInit();
-                grid.Children.Add(menuEllipse[i]);
-                menuEllipse[i].TouchEnter += new EventHandler<TouchEventArgs>(menuEnterHandler);
-                menuEllipse[i].MouseEnter += new MouseEventHandler(menuEnterHandler);
-                menuEllipse[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                menuEllipse[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
+                canvas.Children.Add(menuEllipse[i]);
 
                 menuTextBlock[i] = new TextBlock();
                 menuTextBlock[i].BeginInit();
@@ -146,9 +139,7 @@ namespace MarkingMenu
                 menuTextBlock[i].TextAlignment = TextAlignment.Center;
                 menuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 menuTextBlock[i].EndInit();
-                grid.Children.Add(menuTextBlock[i]);
-                menuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                menuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
+                canvas.Children.Add(menuTextBlock[i]);
             }
 
             for (int i = 0; i < 4; i++)
@@ -161,15 +152,7 @@ namespace MarkingMenu
                 submenuEllipse[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 submenuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
                 submenuEllipse[i].EndInit();
-                grid.Children.Add(submenuEllipse[i]);
-                submenuEllipse[i].TouchEnter += new EventHandler<TouchEventArgs>(submenuEnterHandler);
-                submenuEllipse[i].MouseEnter += new MouseEventHandler(submenuEnterHandler);
-                submenuEllipse[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                submenuEllipse[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
-                submenuEllipse[i].TouchLeave += new EventHandler<TouchEventArgs>(submenuLeaveHandler);
-                submenuEllipse[i].MouseLeave += new MouseEventHandler(submenuLeaveHandler);
-                submenuEllipse[i].MouseUp += new MouseButtonEventHandler(submenuUpHandler);
-                submenuEllipse[i].TouchUp += new EventHandler<TouchEventArgs>(submenuUpHandler);
+                canvas.Children.Add(submenuEllipse[i]);
 
                 submenuTextBlock[i] = new TextBlock();
                 submenuTextBlock[i].BeginInit();
@@ -183,13 +166,7 @@ namespace MarkingMenu
                 submenuTextBlock[i].Foreground = blackBrush;
                 submenuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 submenuTextBlock[i].EndInit();
-                grid.Children.Add(submenuTextBlock[i]);
-                submenuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                submenuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
-                submenuTextBlock[i].TouchEnter += new EventHandler<TouchEventArgs>(submenuTextBlockEnterHandler);
-                submenuTextBlock[i].MouseEnter += new MouseEventHandler(submenuTextBlockEnterHandler);
-                submenuTextBlock[i].MouseUp += new MouseButtonEventHandler(submenuUpHandler);
-                submenuTextBlock[i].TouchUp += new EventHandler<TouchEventArgs>(submenuUpHandler);
+                canvas.Children.Add(submenuTextBlock[i]);
             }
             for (int i = 0; i < 4; i++)
             {
@@ -203,15 +180,7 @@ namespace MarkingMenu
                 subsubmenuEllipse[i].Fill = grayBrush;
                 subsubmenuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
                 subsubmenuEllipse[i].EndInit();
-                grid.Children.Add(subsubmenuEllipse[i]);
-                subsubmenuEllipse[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                subsubmenuEllipse[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
-                subsubmenuEllipse[i].TouchEnter += new EventHandler<TouchEventArgs>(subsubmenuEnterHandler);
-                subsubmenuEllipse[i].MouseEnter += new MouseEventHandler(subsubmenuEnterHandler);
-                subsubmenuEllipse[i].TouchLeave += new EventHandler<TouchEventArgs>(subsubmenuLeaveHandler);
-                subsubmenuEllipse[i].MouseLeave += new MouseEventHandler(subsubmenuLeaveHandler);
-                subsubmenuEllipse[i].MouseUp += new MouseButtonEventHandler(subsubmenuUpHandler);
-                subsubmenuEllipse[i].TouchUp += new EventHandler<TouchEventArgs>(subsubmenuUpHandler);
+                canvas.Children.Add(subsubmenuEllipse[i]);
 
                 subsubmenuTextBlock[i] = new TextBlock();
                 subsubmenuTextBlock[i].BeginInit();
@@ -225,13 +194,7 @@ namespace MarkingMenu
                 subsubmenuTextBlock[i].Foreground = blackBrush;
                 subsubmenuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 subsubmenuTextBlock[i].EndInit();
-                grid.Children.Add(subsubmenuTextBlock[i]);
-                subsubmenuTextBlock[i].TouchMove += new EventHandler<TouchEventArgs>(fieldMoveHandler);
-                subsubmenuTextBlock[i].MouseMove += new MouseEventHandler(fieldMoveHandler);
-                subsubmenuTextBlock[i].TouchEnter += new EventHandler<TouchEventArgs>(subsubmenuTextBlockEnterHandler);
-                subsubmenuTextBlock[i].MouseEnter += new MouseEventHandler(subsubmenuTextBlockEnterHandler);
-                subsubmenuTextBlock[i].MouseUp += new MouseButtonEventHandler(subsubmenuUpHandler);
-                subsubmenuTextBlock[i].TouchUp += new EventHandler<TouchEventArgs>(subsubmenuUpHandler);
+                canvas.Children.Add(subsubmenuTextBlock[i]);
             }
         }
 
@@ -248,37 +211,115 @@ namespace MarkingMenu
             invocation.Fill = invocationUpBrush;
             invocation.Visibility = System.Windows.Visibility.Hidden;
             invocation.EndInit();
-            grid.Children.Add(invocation);
-
-            invocation.MouseLeftButtonDown += new MouseButtonEventHandler(invocateHandler);
-            //invocation.MouseLeave += new MouseEventHandler(cancelInvocationHandler);
-            //invocation.MouseLeftButtonUp += new MouseButtonEventHandler(cancelInvocationHandler);
-            invocation.MouseRightButtonDown += new MouseButtonEventHandler(InvocationUpHandler);
-
-            invocation.TouchDown += new EventHandler<TouchEventArgs>(invocateHandler);
-            invocation.TouchEnter += new EventHandler<TouchEventArgs>(invocateHandler);
-            invocation.TouchUp += new EventHandler<TouchEventArgs>(InvocationUpHandler);
-            invocation.TouchLeave += new EventHandler<TouchEventArgs>(InvocationUpHandler);
-
-
+            canvas.Children.Add(invocation);
         }
-                
-        void invocateHandler(object sender, RoutedEventArgs e)
+        
+        private void canvasDownHandler(object sender, MouseEventArgs e)
         {
-            if (state != DEFAULT)
-                return;
-            state = INVOCATE;
-            invocation.Fill = invocationDownBrush;
+            double X = e.GetPosition(canvas).X, Y = e.GetPosition(canvas).Y;
+
+            switch (state)
+            {
+                case NOTRUNNING:
+                    if (isOnElement(taskTextBlock, X, Y))
+                        start();
+                    break;
+
+                case DEFAULT:
+                    if (isOnElement(invocation, X, Y))
+                    {
+                        state = INVOCATE;
+                        invocation.Fill = invocationDownBrush;
+                    }
+                    break;
+
+                case INVOCATE:
+                    if (isOnElement(field, X, Y))
+                        drawMenu(X, Y);
+                    break;
+
+                case MARKING1:
+                    break;
+
+                case MARKING2:
+                    break;
+
+                case MARKING3:
+                    break;
+
+            }
+
         }
-                
-        void InvocationUpHandler(object sender, RoutedEventArgs e)
+
+        private void canvasMoveHandler(object sender, MouseEventArgs e)
+        {            
+            double X = e.GetPosition(canvas).X, Y = e.GetPosition(canvas).Y;
+         
+            if (isOnElement(field, X, Y))
+                drawLine(X, Y);
+
+            switch (state)
+            {
+                case NOTRUNNING:
+                    break;
+                case DEFAULT:
+                    break;
+                case INVOCATE:
+                    break;
+                case MARKING1:
+                    currentMenu = whichMenuSelected(X, Y, menuCenter);
+                    if (currentMenu != -1)
+                    {
+                        state = MARKING2;
+                        touchLine.setXY(1, menuEllipse[currentMenu]);
+                        drawSubmenu();
+                    }
+                    break;
+                case MARKING2:
+                    currentSubmenu = whichMenuSelected(X, Y, submenuCenter);
+                    if (depth == 2)
+                    {
+                        if (currentSubmenu == -1)
+                            cancelHeighlightMenu();
+                        else
+                            highlightSelectedMenu();
+                    }
+                    if (depth == 3)
+                    {
+                        if (currentSubmenu != -1)
+                        {
+                            state = MARKING3;
+                            touchLine.setXY(2, submenuEllipse[currentSubmenu]);
+                            drawSubsubmenu();
+                        }
+                    }
+                    break;
+                case MARKING3:
+                    currentSubsubmenu = whichMenuSelected(X, Y, subsubmenuCenter);
+                    if (currentSubsubmenu == -1)
+                        cancelHeighlightMenu();
+                    else                    
+                        highlightSelectedMenu();                    
+                    break;
+
+            }
+        }
+
+        private void canvasUpHandler(object sender, MouseEventArgs e)
         {
-            invocationUp();
+
         }
+
+
+        private bool isOnElement(FrameworkElement e, double X, double Y)
+        {            
+            return (X >= e.Margin.Left && X <= e.Margin.Left + e.Width && Y >= e.Margin.Top && Y <= e.Margin.Top + e.Height);        
+        }
+        
         void invocationUp()
         {
             state = DEFAULT;
-            invocation.Fill = invocationUpBrush;         
+            invocation.Fill = invocationUpBrush;
             for(int i = 0; i< 4; i++){
                 menuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
                 menuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
@@ -290,38 +331,22 @@ namespace MarkingMenu
             touchLine.hideLine();
         }
 
-        void fieldDownHandler(object sender, MouseEventArgs e)
+        void drawMenu(double x, double y)
         {
-            if (state != INVOCATE)
-                return;
-            Point point = e.GetPosition(grid);
-            fieldDown(point.X, point.Y);            
-        }
-        void fieldDownHandler(object sender, TouchEventArgs e)
-        {
-            if (state != INVOCATE)
-                return;
-            Point point = e.GetTouchPoint(grid).Position;
-            fieldDown(point.X, point.Y);
-        }
-        void fieldDown(double x, double y)
-        {
-            if (state != INVOCATE)
-                return;
             state = MARKING1;
 
-            int threshold1 = 120;
-            menuEllipse[0].Margin = new Thickness(-menuEllipse[0].Width / 2 + x, y - threshold1 - menuEllipse[0].Height / 2, 0, 0);
-            menuEllipse[1].Margin = new Thickness(-menuEllipse[1].Width / 2 + x + threshold1, -menuEllipse[1].Height / 2 + y, 0, 0);
-            menuEllipse[2].Margin = new Thickness(-menuEllipse[2].Width / 2 +  x, y + threshold1 - menuEllipse[2].Height / 2, 0, 0);
-            menuEllipse[3].Margin = new Thickness(-menuEllipse[3].Width / 2 +  x - threshold1, -menuEllipse[3].Height / 2 + y, 0, 0);
+            menuEllipse[0].Margin = new Thickness(-menuEllipse[0].Width / 2 + x, y - distance - menuEllipse[0].Height / 2, 0, 0);
+            menuEllipse[1].Margin = new Thickness(-menuEllipse[1].Width / 2 + x + distance, -menuEllipse[1].Height / 2 + y, 0, 0);
+            menuEllipse[2].Margin = new Thickness(-menuEllipse[2].Width / 2 + x, y + distance - menuEllipse[2].Height / 2, 0, 0);
+            menuEllipse[3].Margin = new Thickness(-menuEllipse[3].Width / 2 + x - distance, -menuEllipse[3].Height / 2 + y, 0, 0);
 
-            menuTextBlock[0].Margin = new Thickness(-menuTextBlock[0].Width / 2 +  x, y - threshold1 - menuTextBlock[0].Height / 2, 0, 0);
-            menuTextBlock[1].Margin = new Thickness(-menuTextBlock[1].Width / 2 +  x + threshold1, -menuTextBlock[1].Height / 2 + y, 0, 0);
-            menuTextBlock[2].Margin = new Thickness(-menuTextBlock[2].Width / 2 + x, y + threshold1 - menuTextBlock[2].Height / 2, 0, 0);
-            menuTextBlock[3].Margin = new Thickness(-menuTextBlock[3].Width / 2 + x - threshold1, -menuTextBlock[3].Height / 2 + y, 0, 0);
+            menuTextBlock[0].Margin = new Thickness(-menuTextBlock[0].Width / 2 + x, y - distance - menuTextBlock[0].Height / 2, 0, 0);
+            menuTextBlock[1].Margin = new Thickness(-menuTextBlock[1].Width / 2 + x + distance, -menuTextBlock[1].Height / 2 + y, 0, 0);
+            menuTextBlock[2].Margin = new Thickness(-menuTextBlock[2].Width / 2 + x, y + distance - menuTextBlock[2].Height / 2, 0, 0);
+            menuTextBlock[3].Margin = new Thickness(-menuTextBlock[3].Width / 2 + x - distance, -menuTextBlock[3].Height / 2 + y, 0, 0);
 
             touchLine.setXY(0, x, y);
+            menuCenter = new Point(x, y);
 
             for (int i = 0; i < 4; i++)
             {
@@ -338,13 +363,7 @@ namespace MarkingMenu
             }
         }
 
-        void fieldMoveHandler(object sender, MouseEventArgs e){
-            fieldMove(e.GetPosition(grid).X, e.GetPosition(grid).Y);
-        }
-        void fieldMoveHandler(object sender, TouchEventArgs e){
-            fieldMove(e.GetTouchPoint(grid).Position.X, e.GetTouchPoint(grid).Position.Y);
-        }
-        void fieldMove(double x, double y){
+        void drawLine(double x, double y){
             switch (state)
             {
                 case DEFAULT:
@@ -367,37 +386,44 @@ namespace MarkingMenu
             }
         }
 
-        void menuEnterHandler(object sender, RoutedEventArgs e)
+        int whichMenuSelected(double x, double y, Point center)
         {
-            if (state != MARKING1)
-                return;
-            state = MARKING2;
-
-            for(int i =0; i<4; i++){
-                if ((Ellipse)sender == menuEllipse[i])
+            if (Math.Pow(x - center.X, 2) + Math.Pow(y - center.Y, 2) > Math.Pow(threshold, 2))
+            {
+                double angle = Math.Atan2(-(y - center.Y), x - center.X);
+                if (angle >= Math.PI / 4 && angle < Math.PI * 3 / 4)
                 {
-                    currentMenu = i;
-                    touchLine.setXY(1, menuEllipse[i].Margin.Left + menuEllipse[i].Width / 2, menuEllipse[i].Margin.Top + menuEllipse[i].Height / 2);
+                    return 0;
                 }
+                else if (angle >= -Math.PI / 4 && angle < Math.PI / 4)
+                {
+                    return 1;
+                }
+                else if (angle >= -Math.PI * 3 / 4 && angle < -Math.PI / 4)
+                {
+                    return 2;
+                }
+                else
+                    return 3;
             }
-            
-            menuEnter(((Ellipse)sender).Margin.Left, ((Ellipse)sender).Margin.Top);
-            
+            return -1;
         }
-        void menuEnter(double x, double y)
-        {
 
-            int threshold1 = 120;
-            submenuEllipse[0].Margin = new Thickness(x, y - threshold1, 0, 0);
-            submenuEllipse[1].Margin = new Thickness(x + threshold1, y, 0, 0);
-            submenuEllipse[2].Margin = new Thickness(x, y + threshold1, 0, 0);
-            submenuEllipse[3].Margin = new Thickness(x - threshold1, y, 0, 0);
+        void drawSubmenu()
+        {
+            submenuCenter = new Point(menuEllipse[currentMenu].Margin.Left + menuEllipse[currentMenu].Width / 2, menuEllipse[currentMenu].Margin.Top + menuEllipse[currentMenu].Height / 2);
+
+            double x = menuEllipse[currentMenu].Margin.Left, y = menuEllipse[currentMenu].Margin.Top;
+            submenuEllipse[0].Margin = new Thickness(x, y - distance, 0, 0);
+            submenuEllipse[1].Margin = new Thickness(x + distance, y, 0, 0);
+            submenuEllipse[2].Margin = new Thickness(x, y + distance, 0, 0);
+            submenuEllipse[3].Margin = new Thickness(x - distance, y, 0, 0);
 
             double x_ = (submenuEllipse[0].Width - submenuTextBlock[0].Width) / 2, y_ = (submenuEllipse[0].Height - submenuTextBlock[0].Height) / 2;
-            submenuTextBlock[0].Margin = new Thickness(x + x_, y + y_ - threshold1, 0, 0);
-            submenuTextBlock[1].Margin = new Thickness(x + x_ + threshold1, y + y_, 0, 0);
-            submenuTextBlock[2].Margin = new Thickness(x + x_, y + y_ + threshold1, 0, 0);
-            submenuTextBlock[3].Margin = new Thickness(x + x_ - threshold1, y + y_, 0, 0);
+            submenuTextBlock[0].Margin = new Thickness(x + x_, y + y_ - distance, 0, 0);
+            submenuTextBlock[1].Margin = new Thickness(x + x_ + distance, y + y_, 0, 0);
+            submenuTextBlock[2].Margin = new Thickness(x + x_, y + y_ + distance, 0, 0);
+            submenuTextBlock[3].Margin = new Thickness(x + x_ - distance, y + y_, 0, 0);
 
             for (int i = 0; i < 4; i++) {
                 menuEllipse[i].Fill = lightgrayBrush;
@@ -416,52 +442,22 @@ namespace MarkingMenu
                     submenuTextBlock[i].Text = menus.submenus[currentMenu, i];
             }
         }
-
-        void submenuEnterHandler(object sender, RoutedEventArgs e)
-        {
-            if (state != MARKING2)
-                return;
-            switch(depth){
-                case 2:
-                    for (int i = 0; i < 4; i++)
-                    {
-                        if ((Ellipse)sender == submenuEllipse[i])
-                        {
-                            currentSubmenu = i;
-                        }
-                    }
-                    submenuEnter();
-                    break;
-                case 3:
-                    state = MARKING3;
-
-                    for (int i = 0; i < 4; i++)
-                    {
-                        if ((Ellipse)sender == submenuEllipse[i])
-                        {
-                            currentSubmenu = i;
-                            touchLine.setXY(2, submenuEllipse[i].Margin.Left + submenuEllipse[i].Width / 2, submenuEllipse[i].Margin.Top + submenuEllipse[i].Height / 2);
-                        }
-                    }
-                    submenuEnter(((Ellipse)sender).Margin.Left, ((Ellipse)sender).Margin.Top);
-                    break;
-            }
-        }
                 
-        
-        void submenuEnter(double x, double y)
+        void drawSubsubmenu()
         {
-            int threshold1 = 120;
-            subsubmenuEllipse[0].Margin = new Thickness(x, y - threshold1, 0, 0);
-            subsubmenuEllipse[1].Margin = new Thickness(x + threshold1, y, 0, 0);
-            subsubmenuEllipse[2].Margin = new Thickness(x, y + threshold1, 0, 0);
-            subsubmenuEllipse[3].Margin = new Thickness(x - threshold1, y, 0, 0);
+            subsubmenuCenter = new Point(submenuEllipse[currentSubmenu].Margin.Left + submenuEllipse[currentSubmenu].Width / 2, submenuEllipse[currentSubmenu].Margin.Top + submenuEllipse[currentSubmenu].Height / 2);
+
+            double x = submenuEllipse[currentSubmenu].Margin.Left, y = submenuEllipse[currentSubmenu].Margin.Top;
+            subsubmenuEllipse[0].Margin = new Thickness(x, y - distance, 0, 0);
+            subsubmenuEllipse[1].Margin = new Thickness(x + distance, y, 0, 0);
+            subsubmenuEllipse[2].Margin = new Thickness(x, y + distance, 0, 0);
+            subsubmenuEllipse[3].Margin = new Thickness(x - distance, y, 0, 0);
 
             double x_ = (subsubmenuEllipse[0].Width - subsubmenuTextBlock[0].Width) / 2, y_ = (subsubmenuEllipse[0].Height - subsubmenuTextBlock[0].Height) / 2;
-            subsubmenuTextBlock[0].Margin = new Thickness(x + x_, y + y_ - threshold1, 0, 0);
-            subsubmenuTextBlock[1].Margin = new Thickness(x + x_ + threshold1, y + y_, 0, 0);
-            subsubmenuTextBlock[2].Margin = new Thickness(x + x_, y + y_ + threshold1, 0, 0);
-            subsubmenuTextBlock[3].Margin = new Thickness(x + x_ - threshold1, y + y_, 0, 0);
+            subsubmenuTextBlock[0].Margin = new Thickness(x + x_, y + y_ - distance, 0, 0);
+            subsubmenuTextBlock[1].Margin = new Thickness(x + x_ + distance, y + y_, 0, 0);
+            subsubmenuTextBlock[2].Margin = new Thickness(x + x_, y + y_ + distance, 0, 0);
+            subsubmenuTextBlock[3].Margin = new Thickness(x + x_ - distance, y + y_, 0, 0);
 
             for (int i = 0; i < 4; i++)
             {
@@ -485,12 +481,44 @@ namespace MarkingMenu
                     subsubmenuTextBlock[i].Text = menus.subsubmenus[currentMenu, currentSubmenu, i];
             }
         }
-        void submenuEnter()
+        
+        void highlightSelectedMenu()
         {
-            submenuEllipse[currentSubmenu].Fill = blackBrush;
-            submenuEllipse[currentSubmenu].Stroke = blackBrush;
-            submenuTextBlock[currentSubmenu].Background = blackBrush;
-            submenuTextBlock[currentSubmenu].Foreground = whiteBrush;
+            cancelHeighlightMenu();
+            if (depth == 2)
+            {
+                submenuEllipse[currentSubmenu].Fill = blackBrush;
+                submenuEllipse[currentSubmenu].Stroke = blackBrush;
+                submenuTextBlock[currentSubmenu].Background = blackBrush;
+                submenuTextBlock[currentSubmenu].Foreground = whiteBrush;
+            }
+            else
+            {
+                subsubmenuEllipse[currentSubsubmenu].Fill = blackBrush;
+                subsubmenuEllipse[currentSubsubmenu].Stroke = blackBrush;
+                subsubmenuTextBlock[currentSubsubmenu].Background = blackBrush;
+                subsubmenuTextBlock[currentSubsubmenu].Foreground = whiteBrush;
+            }
+        }
+
+        void cancelHeighlightMenu()
+        {
+            if (depth == 2)            
+                for (int i = 0; i < 4; i++)
+                {
+                    submenuEllipse[i].Fill = grayBrush;
+                    submenuEllipse[i].Stroke = grayBrush;
+                    submenuTextBlock[i].Foreground = blackBrush;
+                    submenuTextBlock[i].Background = grayBrush;
+                }
+            else
+                for (int i = 0; i < 4; i++)
+                {
+                    subsubmenuEllipse[i].Fill = grayBrush;
+                    subsubmenuEllipse[i].Stroke = grayBrush;
+                    subsubmenuTextBlock[i].Foreground = blackBrush;
+                    subsubmenuTextBlock[i].Background = grayBrush;
+                }
         }
 
         void submenuLeaveHandler(object sender, RoutedEventArgs e)
@@ -503,19 +531,8 @@ namespace MarkingMenu
                 return;
 
             currentSubmenu = -1;
-            submenuLeave();
         }
 
-        void submenuLeave()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                submenuEllipse[i].Fill = grayBrush;
-                submenuEllipse[i].Stroke = grayBrush;
-                submenuTextBlock[i].Foreground = blackBrush;
-                submenuTextBlock[i].Background = grayBrush;
-            }
-        }
 
         void submenuUpHandler(object sender, RoutedEventArgs e)
         {
@@ -530,66 +547,7 @@ namespace MarkingMenu
             }
         }
 
-        void submenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
-        {
-            if (depth != 2)
-                return;
-            if (state != MARKING2)
-                return;
-            for (int i = 0; i < 4; i++)
-            {
-                if ((TextBlock)sender == submenuTextBlock[i])
-                {
-                    submenuEnterHandler(submenuEllipse[i], e);
-                }
-            }
-        }
 
-        void subsubmenuEnterHandler(object sender, RoutedEventArgs e){
-            if (state != MARKING3)
-                return;
-            for (int i = 0; i < 4; i++)
-            {
-                if ((Ellipse)sender == subsubmenuEllipse[i])
-                {
-                    currentSubsubmenu = i;
-                }
-            }
-            subsubmenuEnter();
-        }
-        void subsubmenuEnter()
-        {
-            subsubmenuEllipse[currentSubsubmenu].Fill = blackBrush;
-            subsubmenuEllipse[currentSubsubmenu].Stroke = blackBrush;
-            subsubmenuTextBlock[currentSubsubmenu].Background = blackBrush;
-            subsubmenuTextBlock[currentSubsubmenu].Foreground = whiteBrush;
-        }
-
-        void subsubmenuLeaveHandler(object sender, RoutedEventArgs e)
-        {
-            if (state != MARKING3)
-                return;
-            if (subsubmenuTextBlock[currentSubsubmenu].IsMouseOver || subsubmenuTextBlock[currentSubsubmenu].AreAnyTouchesCaptured)
-                return;
-            
-            currentSubsubmenu = -1;
-            subsubmenuLeave();
-        }
-
-        void subsubmenuLeave()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                subsubmenuEllipse[i].Fill = grayBrush;
-                subsubmenuEllipse[i].Stroke = grayBrush;
-                subsubmenuTextBlock[i].Foreground = blackBrush;
-                subsubmenuTextBlock[i].Background = grayBrush;
-                if (depth == 2)
-                    subsubmenuTextBlock[i].Text = menus.subsubmenus[0, currentMenu, i];
-                else
-                    subsubmenuTextBlock[i].Text = menus.subsubmenus[currentMenu, currentSubmenu, i];
-            }
-        }
 
         void subsubmenuUpHandler(object sender, RoutedEventArgs e)
         {
@@ -603,20 +561,7 @@ namespace MarkingMenu
             }
         }
 
-
-        void subsubmenuTextBlockEnterHandler(object sender, RoutedEventArgs e)
-        {
-            if (state != MARKING3)
-                return;
-            for (int i = 0; i < 4; i++)
-            {
-                if ((TextBlock)sender == subsubmenuTextBlock[i])
-                {
-                    subsubmenuEnterHandler(subsubmenuEllipse[i], e);
-                }
-            }
-        }
-
+        
         void fieldUpHandler(object sender, RoutedEventArgs e)
         {
             fieldUp();
@@ -651,7 +596,7 @@ namespace MarkingMenu
             panelBackground.Margin = new Thickness(0, 0, 0, 0);
             panelBackground.Fill = grayBrush;
             panelBackground.EndInit();
-            grid.Children.Add(panelBackground);
+            canvas.Children.Add(panelBackground);
 
             participantTextBlock = new TextBlock();
             participantTextBlock.BeginInit();
@@ -665,7 +610,7 @@ namespace MarkingMenu
             participantTextBlock.Foreground = whiteBrush;
             participantTextBlock.Text = "Participant #" + participantNumber + "\nSession " + tasks.curruntSession + "/" + tasks.maxSession;
             participantTextBlock.EndInit();
-            grid.Children.Add(participantTextBlock);
+            canvas.Children.Add(participantTextBlock);
 
             taskTextBlock = new TextBlock();
             taskTextBlock.BeginInit();
@@ -680,27 +625,18 @@ namespace MarkingMenu
             taskTextBlock.Foreground = blackBrush;
             taskTextBlock.Text = "START";
             taskTextBlock.EndInit();
-            grid.Children.Add(taskTextBlock);
+            canvas.Children.Add(taskTextBlock);
 
             state = NOTRUNNING;
 
-            taskTextBlock.TouchDown += new EventHandler<TouchEventArgs>(start);
-            taskTextBlock.MouseDown += new MouseButtonEventHandler(start);
         }
 
         void initializeTouchLine()
         {
-            touchLine = new TouchLine(depth, grid) ;
+            touchLine = new TouchLine(depth, canvas) ;
         }
-
-        /*
-        void drawTouchLine(int index, double x1, double x2, double y1, double y2)
-        {
-            touchLine.setXY(0, x1, y1);
-            touchLine.setXY(1, x2, y2);
-        }*/
-
-        void start(object sender, RoutedEventArgs e)
+        
+        void start()
         {
             if (state != NOTRUNNING)
                 return;
@@ -752,7 +688,7 @@ namespace MarkingMenu
         Brush touchLineBrush = new SolidColorBrush(Color.FromArgb(50, 0, 0, 0));
         int depth;
 
-        public TouchLine(int depth, Grid grid){
+        public TouchLine(int depth, Canvas canvas){
             this.depth = depth;
             touchLine = new Line[depth];
             touchEllepse = new Ellipse[depth+1];
@@ -769,7 +705,7 @@ namespace MarkingMenu
                 touchLine[i].Visibility = Visibility.Hidden;
                 touchLine[i].EndInit();
 
-                grid.Children.Add(touchLine[i]);
+                canvas.Children.Add(touchLine[i]);
             }
             for (int i = 0; i < depth + 1; i++)
             {
@@ -785,7 +721,7 @@ namespace MarkingMenu
                 touchEllepse[i].Visibility = Visibility.Hidden;
                 touchEllepse[i].EndInit();
 
-                grid.Children.Add(touchEllepse[i]);
+                canvas.Children.Add(touchEllepse[i]);
             }
 
         }
@@ -794,6 +730,10 @@ namespace MarkingMenu
             Xs[index] = x;
             Ys[index] = y;
         }
+
+        public void setXY(int index, FrameworkElement e){
+            setXY(index, e.Margin.Left + e.Width / 2, e.Margin.Top + e.Height / 2);
+        }   
 
         public void drawLine(int level){
             for (int i = 0; i < level; i++) {
@@ -1045,7 +985,7 @@ namespace FastTap
                 rects[i].Margin = new Thickness((screenWidth - rectNx * rectWidth) + (i % rectNx) * rectWidth, (i / rectNx) * rectHeight, 0, 0);
                 rects[i].Visibility = System.Windows.Visibility.Visible;
                 rects[i].EndInit();
-                grid.Children.Add(rects[i]);
+                canvas.Children.Add(rects[i]);
 
                 rects[i].MouseDown += new MouseButtonEventHandler(buttonDownHandler);
                 rects[i].MouseLeave += new MouseEventHandler(buttonUpHandler);
@@ -1074,7 +1014,7 @@ namespace FastTap
                 //texts[i].Focusable = false;
                 texts[i].Visibility = System.Windows.Visibility.Hidden;
                 texts[i].EndInit();
-                grid.Children.Add(texts[i]);
+                canvas.Children.Add(texts[i]);
 
                 texts[i].MouseDown += new MouseButtonEventHandler(buttonDownHandler);
                 texts[i].MouseLeave += new MouseEventHandler(buttonUpHandler);
@@ -1101,7 +1041,7 @@ namespace FastTap
             invocation.Stroke = grayBrush;
             invocation.Fill = invocationUpBrush;
             invocation.EndInit();
-            grid.Children.Add(invocation);
+            canvas.Children.Add(invocation);
 
             invocation.MouseLeftButtonDown += new MouseButtonEventHandler(invocateHandler);
             //invocation.MouseLeave += new MouseEventHandler(cancelInvocationHandler);
@@ -1124,7 +1064,7 @@ namespace FastTap
             tempRectangle.Stroke = grayBrush;
             tempRectangle.Visibility = System.Windows.Visibility.Hidden;
             tempRectangle.EndInit();
-            grid.Children.Add(tempRectangle);
+            canvas.Children.Add(tempRectangle);
         }
 
         // Handler for invocation, by both mouse and touch event
@@ -1230,7 +1170,7 @@ namespace FastTap
             panelBackground.Margin = new Thickness(0, 0, 0, 0);
             panelBackground.Fill = grayBrush;
             panelBackground.EndInit();
-            grid.Children.Add(panelBackground);
+            canvas.Children.Add(panelBackground);
 
             participantTextBlock = new TextBlock();
             participantTextBlock.BeginInit();
@@ -1245,7 +1185,7 @@ namespace FastTap
             participantTextBlock.Foreground = whiteBrush;
             participantTextBlock.Text = "Participant #" + participantNumber + "\nSession " + tasks.curruntSession + "/" + tasks.maxSession + sessionTasks;
             participantTextBlock.EndInit();
-            grid.Children.Add(participantTextBlock);
+            canvas.Children.Add(participantTextBlock);
 
             taskTextBlock = new TextBlock();
             taskTextBlock.BeginInit();
@@ -1262,7 +1202,7 @@ namespace FastTap
             taskTextBlock.Foreground = blackBrush;
             taskTextBlock.Text = "START";
             taskTextBlock.EndInit();            
-            grid.Children.Add(taskTextBlock);
+            canvas.Children.Add(taskTextBlock);
 
             state = NOTRUNNING;
 
