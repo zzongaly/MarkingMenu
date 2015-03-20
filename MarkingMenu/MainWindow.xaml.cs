@@ -130,7 +130,7 @@ namespace MarkingMenu
             taskTextBlock.Margin = new Thickness(50, 200, 0, 0);
             taskTextBlock.Focusable = false;
             taskTextBlock.Background = whiteBrush;
-            taskTextBlock.FontSize = 30;
+            taskTextBlock.FontSize = 25;
             taskTextBlock.Foreground = blackBrush;
             taskTextBlock.TextAlignment = TextAlignment.Center;
             taskTextBlock.Padding = new Thickness(0, (taskTextBlock.Height - taskTextBlock.FontSize) / 2, 0, (taskTextBlock.Height - taskTextBlock.FontSize) / 2);
@@ -199,8 +199,8 @@ namespace MarkingMenu
                 menuTextBlock[i] = new TextBlock();
                 menuTextBlock[i].BeginInit();
                 menuTextBlock[i].Width = width * 0.8;
-                menuTextBlock[i].Height = 20;
-                menuTextBlock[i].FontSize = 15;
+                menuTextBlock[i].Height = 30;
+                menuTextBlock[i].FontSize = 20;
                 menuTextBlock[i].Padding = new Thickness(0, 0, 0, 0);
                 menuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 menuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
@@ -225,8 +225,8 @@ namespace MarkingMenu
                 submenuTextBlock[i] = new TextBlock();
                 submenuTextBlock[i].BeginInit();
                 submenuTextBlock[i].Width = width * 0.8;
-                submenuTextBlock[i].Height = 20;
-                submenuTextBlock[i].FontSize = 15;
+                submenuTextBlock[i].Height = 30;
+                submenuTextBlock[i].FontSize = 20;
                 submenuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 submenuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 submenuTextBlock[i].TextAlignment = TextAlignment.Center;
@@ -253,8 +253,8 @@ namespace MarkingMenu
                 subsubmenuTextBlock[i] = new TextBlock();
                 subsubmenuTextBlock[i].BeginInit();
                 subsubmenuTextBlock[i].Width = width * 0.8;
-                subsubmenuTextBlock[i].Height = 20;
-                subsubmenuTextBlock[i].FontSize = 15;
+                subsubmenuTextBlock[i].Height = 30;
+                subsubmenuTextBlock[i].FontSize = 20;
                 subsubmenuTextBlock[i].VerticalAlignment = System.Windows.VerticalAlignment.Top;
                 subsubmenuTextBlock[i].HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                 subsubmenuTextBlock[i].TextAlignment = TextAlignment.Center;
