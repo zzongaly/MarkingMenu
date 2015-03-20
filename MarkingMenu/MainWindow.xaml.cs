@@ -50,7 +50,7 @@ namespace MarkingMenu
 
         TouchLine touchLine;
 
-        SolidColorBrush buttonDownBrush, InvocationBrush, invocationDownBrush, grayBrush, whiteBrush, blackBrush, lightgrayBrush, lightlightgrayBrush, darkgrayBrush;
+        SolidColorBrush buttonDownBrush, InvocationBrush, invocationDownBrush, grayBrush, whiteBrush, blackBrush, lightgrayBrush, lightlightgrayBrush;
 
         int[] sessionTasks;
         int currentTask;
@@ -65,16 +65,20 @@ namespace MarkingMenu
             tasks = new Tasks(depth, maxSession, numMenuPerParticipant, numDuplcationInSession, participantNumber);
             markingState = new int[depth];
 
-            canvas.MouseDown += new MouseButtonEventHandler(canvasDownHandler);
-            canvas.MouseMove += new MouseEventHandler(canvasMoveHandler);
-            canvas.MouseUp += new MouseButtonEventHandler(canvasUpHandler);            
-
+            initializeCanvas();
             initializeBrushs();
+            initializePanel();
             initializeField();
             initializeInvocation();
-            initializePanel();
             initializeEllipse();
             initializeTouchLine();
+        }
+
+        private void initializeCanvas()
+        {
+            canvas.MouseDown += new MouseButtonEventHandler(canvasDownHandler);
+            canvas.MouseMove += new MouseEventHandler(canvasMoveHandler);
+            canvas.MouseUp += new MouseButtonEventHandler(canvasUpHandler);
         }
 
         private void initializeBrushs()
@@ -90,6 +94,54 @@ namespace MarkingMenu
             
         }
 
+        private void initializePanel()
+        {
+            Rectangle panelBackground = new Rectangle();
+            panelBackground.BeginInit();
+            panelBackground.Width = screenWidth / 2;
+            panelBackground.Height = screenHeight;
+            panelBackground.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            panelBackground.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            panelBackground.Margin = new Thickness(0, 0, 0, 0);
+            panelBackground.Fill = grayBrush;
+            panelBackground.EndInit();
+            canvas.Children.Add(panelBackground);
+
+            participantTextBlock = new TextBlock();
+            participantTextBlock.BeginInit();
+            participantTextBlock.Width = 300;
+            participantTextBlock.Height = 100;
+            participantTextBlock.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            participantTextBlock.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            participantTextBlock.Margin = new Thickness(50, 50, 0, 0);
+            participantTextBlock.Background = grayBrush;
+            participantTextBlock.FontSize = 20;
+            participantTextBlock.Foreground = whiteBrush;
+            participantTextBlock.Text = "Participant #" + participantNumber + "\nSession " + tasks.curruntSession + "/" + tasks.maxSession;
+            participantTextBlock.EndInit();
+            canvas.Children.Add(participantTextBlock);
+
+            taskTextBlock = new TextBlock();
+            taskTextBlock.BeginInit();
+            taskTextBlock.Width = 300;
+            taskTextBlock.Height = 100;
+            taskTextBlock.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            taskTextBlock.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            taskTextBlock.Margin = new Thickness(50, 200, 0, 0);
+            taskTextBlock.Focusable = false;
+            taskTextBlock.Background = whiteBrush;
+            taskTextBlock.FontSize = 30;
+            taskTextBlock.Foreground = blackBrush;
+            taskTextBlock.TextAlignment = TextAlignment.Center;
+            taskTextBlock.Padding = new Thickness(0, (taskTextBlock.Height - taskTextBlock.FontSize) / 2, 0, (taskTextBlock.Height - taskTextBlock.FontSize) / 2);
+            taskTextBlock.Text = "START";
+            taskTextBlock.EndInit();
+            canvas.Children.Add(taskTextBlock);
+
+            state = NOTRUNNING;
+
+        }
+
         private void initializeField()
         {
             field = new Rectangle();
@@ -103,6 +155,22 @@ namespace MarkingMenu
             field.Margin = new Thickness(screenWidth/2 , 0, 0, 0);
             field.EndInit();
             canvas.Children.Add(field);
+        }
+        
+        private void initializeInvocation()
+        {
+            invocation = new Rectangle();
+            invocation.BeginInit();
+            invocation.Width = invocationWidth;
+            invocation.Height = invocationHeight;
+            invocation.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            invocation.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            invocation.Margin = new Thickness(screenWidth / 2, screenHeight - invocationHeight, 0, 0);
+            invocation.Stroke = grayBrush;
+            invocation.Fill = InvocationBrush;
+            invocation.Visibility = System.Windows.Visibility.Hidden;
+            invocation.EndInit();
+            canvas.Children.Add(invocation);
         }
 
         private void initializeEllipse()
@@ -197,23 +265,13 @@ namespace MarkingMenu
                 canvas.Children.Add(subsubmenuTextBlock[i]);
             }
         }
-
-        private void initializeInvocation()
+        
+        private void initializeTouchLine()
         {
-            invocation = new Rectangle();
-            invocation.BeginInit();
-            invocation.Width = invocationWidth;
-            invocation.Height = invocationHeight;
-            invocation.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-            invocation.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            invocation.Margin = new Thickness(screenWidth / 2, screenHeight - invocationHeight, 0, 0);
-            invocation.Stroke = grayBrush;
-            invocation.Fill = InvocationBrush;
-            invocation.Visibility = System.Windows.Visibility.Hidden;
-            invocation.EndInit();
-            canvas.Children.Add(invocation);
+            touchLine = new TouchLine(depth, canvas);
         }
         
+
         private void canvasDownHandler(object sender, MouseEventArgs e)
         {
             double X = e.GetPosition(canvas).X, Y = e.GetPosition(canvas).Y;
@@ -364,12 +422,37 @@ namespace MarkingMenu
         {            
             return (X >= e.Margin.Left && X <= e.Margin.Left + e.Width && Y >= e.Margin.Top && Y <= e.Margin.Top + e.Height);        
         }
-        
-        void cancelInvocation()
+                
+        private int whichMenuSelected(double x, double y, Point center)
+        {
+            if (Math.Pow(x - center.X, 2) + Math.Pow(y - center.Y, 2) > Math.Pow(threshold, 2))
+            {
+                double angle = Math.Atan2(-(y - center.Y), x - center.X);
+                if (angle >= Math.PI / 4 && angle < Math.PI * 3 / 4)
+                {
+                    return 0;
+                }
+                else if (angle >= -Math.PI / 4 && angle < Math.PI / 4)
+                {
+                    return 1;
+                }
+                else if (angle >= -Math.PI * 3 / 4 && angle < -Math.PI / 4)
+                {
+                    return 2;
+                }
+                else
+                    return 3;
+            }
+            return -1;
+        }
+
+
+        private void cancelInvocation()
         {
             state = DEFAULT;
             invocation.Fill = InvocationBrush;
-            for(int i = 0; i< 4; i++){
+            for (int i = 0; i < 4; i++)
+            {
                 menuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
                 menuTextBlock[i].Visibility = System.Windows.Visibility.Hidden;
                 submenuEllipse[i].Visibility = System.Windows.Visibility.Hidden;
@@ -380,7 +463,31 @@ namespace MarkingMenu
             touchLine.hideLine();
         }
 
-        void drawMenu(double x, double y)
+        private void drawLine(double x, double y)
+        {
+            switch (state)
+            {
+                case DEFAULT:
+                    touchLine.setXY(0, x, y);
+                    break;
+                case MARKING1:
+                    touchLine.setXY(1, x, y);
+                    touchLine.drawLine(1);
+                    break;
+                case MARKING2:
+                    touchLine.setXY(2, x, y);
+                    touchLine.drawLine(2);
+                    break;
+                case MARKING3:
+                    touchLine.setXY(3, x, y);
+                    touchLine.drawLine(3);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void drawMenu(double x, double y)
         {
             state = MARKING1;
 
@@ -406,59 +513,13 @@ namespace MarkingMenu
                 menuEllipse[i].Visibility = System.Windows.Visibility.Visible;
                 menuTextBlock[i].Visibility = System.Windows.Visibility.Visible;
                 if (depth == 2)
-                    menuTextBlock[i].Text = menus.submenus[0,i];
+                    menuTextBlock[i].Text = menus.submenus[0, i];
                 else
                     menuTextBlock[i].Text = menus.menus[i];
             }
         }
 
-        void drawLine(double x, double y){
-            switch (state)
-            {
-                case DEFAULT:
-                    touchLine.setXY(0, x, y);
-                    break;
-                case MARKING1:
-                    touchLine.setXY(1, x, y);
-                    touchLine.drawLine(1);
-                    break;
-                case MARKING2:
-                    touchLine.setXY(2, x, y);
-                    touchLine.drawLine(2);
-                    break;
-                case MARKING3:
-                    touchLine.setXY(3, x, y);
-                    touchLine.drawLine(3);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        int whichMenuSelected(double x, double y, Point center)
-        {
-            if (Math.Pow(x - center.X, 2) + Math.Pow(y - center.Y, 2) > Math.Pow(threshold, 2))
-            {
-                double angle = Math.Atan2(-(y - center.Y), x - center.X);
-                if (angle >= Math.PI / 4 && angle < Math.PI * 3 / 4)
-                {
-                    return 0;
-                }
-                else if (angle >= -Math.PI / 4 && angle < Math.PI / 4)
-                {
-                    return 1;
-                }
-                else if (angle >= -Math.PI * 3 / 4 && angle < -Math.PI / 4)
-                {
-                    return 2;
-                }
-                else
-                    return 3;
-            }
-            return -1;
-        }
-
-        void drawSubmenu()
+        private void drawSubmenu()
         {
             submenuCenter = new Point(menuEllipse[currentMenu].Margin.Left + menuEllipse[currentMenu].Width / 2, menuEllipse[currentMenu].Margin.Top + menuEllipse[currentMenu].Height / 2);
 
@@ -491,8 +552,8 @@ namespace MarkingMenu
                     submenuTextBlock[i].Text = menus.submenus[currentMenu, i];
             }
         }
-                
-        void drawSubsubmenu()
+
+        private void drawSubsubmenu()
         {
             subsubmenuCenter = new Point(submenuEllipse[currentSubmenu].Margin.Left + submenuEllipse[currentSubmenu].Width / 2, submenuEllipse[currentSubmenu].Margin.Top + submenuEllipse[currentSubmenu].Height / 2);
 
@@ -530,8 +591,8 @@ namespace MarkingMenu
                     subsubmenuTextBlock[i].Text = menus.subsubmenus[currentMenu, currentSubmenu, i];
             }
         }
-        
-        void highlightSelectedMenu()
+
+        private void highlightSelectedMenu()
         {
             cancelHeighlightMenu();
             if (depth == 2)
@@ -550,7 +611,7 @@ namespace MarkingMenu
             }
         }
 
-        void cancelHeighlightMenu()
+        private void cancelHeighlightMenu()
         {
             if (depth == 2)            
                 for (int i = 0; i < 4; i++)
@@ -569,59 +630,9 @@ namespace MarkingMenu
                     subsubmenuTextBlock[i].Background = grayBrush;
                 }
         }
-                              
-        void initializePanel()
-        {
-            Rectangle panelBackground = new Rectangle();
-            panelBackground.BeginInit();
-            panelBackground.Width = screenWidth / 2;
-            panelBackground.Height = screenHeight;
-            panelBackground.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-            panelBackground.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            panelBackground.Margin = new Thickness(0, 0, 0, 0);
-            panelBackground.Fill = grayBrush;
-            panelBackground.EndInit();
-            canvas.Children.Add(panelBackground);
 
-            participantTextBlock = new TextBlock();
-            participantTextBlock.BeginInit();
-            participantTextBlock.Width = 300;
-            participantTextBlock.Height = 100;
-            participantTextBlock.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-            participantTextBlock.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            participantTextBlock.Margin = new Thickness(50, 50, 0, 0);
-            participantTextBlock.Background = grayBrush;            
-            participantTextBlock.FontSize = 20;
-            participantTextBlock.Foreground = whiteBrush;
-            participantTextBlock.Text = "Participant #" + participantNumber + "\nSession " + tasks.curruntSession + "/" + tasks.maxSession;
-            participantTextBlock.EndInit();
-            canvas.Children.Add(participantTextBlock);
 
-            taskTextBlock = new TextBlock();
-            taskTextBlock.BeginInit();
-            taskTextBlock.Width = 300;
-            taskTextBlock.Height = 100;
-            taskTextBlock.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-            taskTextBlock.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-            taskTextBlock.Margin = new Thickness(50, 200, 0, 0);
-            taskTextBlock.Focusable = false;
-            taskTextBlock.Background = whiteBrush;
-            taskTextBlock.FontSize = 30;
-            taskTextBlock.Foreground = blackBrush;
-            taskTextBlock.Text = "START";
-            taskTextBlock.EndInit();
-            canvas.Children.Add(taskTextBlock);
-
-            state = NOTRUNNING;
-
-        }
-
-        void initializeTouchLine()
-        {
-            touchLine = new TouchLine(depth, canvas) ;
-        }
-        
-        void start()
+        private void start()
         {
             if (state != NOTRUNNING)
                 return;
@@ -642,7 +653,7 @@ namespace MarkingMenu
             //touchLine.drawLine(1);
         }
 
-        void runNext()
+        private void runNext()
         {
             state = DEFAULT;
 
@@ -659,7 +670,7 @@ namespace MarkingMenu
         }
 
         //TODO
-        void saveLog(String log)
+        private void saveLog(String log)
         {
 
         }
